@@ -1,0 +1,9 @@
+[package]
+name = "snake"
+version = "0.1.0"
+authors = ["Odin Hultgren Van Der Horst <odinhorst@hotmail.com>"]
+
+[dependencies]
+orbclient = "*"
+rand = "*"
+lazy_static = "*"
