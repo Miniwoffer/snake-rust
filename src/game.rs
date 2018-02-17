@@ -24,10 +24,8 @@
             }
         }
         pub fn intersects(&self , other: &GameObject) -> bool{
-            if  self.x  +   (self.w as i32)  < other.x &&
-                other.x +   (other.w as i32) < self.x  &&
-                self.y  +   (self.h as i32) < other.y &&
-                other.y +   (other.h as i32) < self.y &&
+            if  self.x == other.x &&
+                self.y == other.y  &&
                 other.id != self.id {
                     return true;
                 }
