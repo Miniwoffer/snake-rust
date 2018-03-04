@@ -19,6 +19,9 @@ fn main() {
     let betwene = Range::new(0,255);
     let mut rng = rand::thread_rng();
 
+    let times = SIZE/10;// board size
+    let randpos = Range::new(1,times-2);
+    let mut run = true; //should the game update
 
     let (width, height) = orbclient::get_display_size().unwrap();
     
@@ -36,8 +39,8 @@ fn main() {
     
     let mut map   : Vec<GameObject> = Vec::new();
     
-    let times = SIZE/10;
-    let randpos = Range::new(1,times-2);
+
+    //draw map
     for x in 0..times {
         map.push(GameObject::new((x as i32)*10,0,10,10,50,betwene.ind_sample(&mut rng),50));
         map.push(GameObject::new((x as i32)*10,(SIZE as i32)-10,10,10,50,betwene.ind_sample(&mut rng),50));
@@ -50,13 +53,16 @@ fn main() {
 
 
     let mut dir = 0;
-    let mut speed = 10;
+    let speed = 10;
     let mut points = 0;
     let mut time_since_last_draw = SystemTime::now();
      
     snake.push(GameObject::new(100,100,10,10,betwene.ind_sample(&mut rng),50,50));
 
     'events: loop {
+
+
+
         for event in window.events(){
             match event.to_option(){
                 EventOption::Quit(_quit_event) => break 'events,
@@ -68,7 +74,7 @@ fn main() {
                         80 => dir = 2,
                         72 => dir = 3,
                         _ => {
-                             println!("{:?}",evt);
+                             //println!("{:?}",evt);
                         }
                     }
                     }
@@ -76,79 +82,83 @@ fn main() {
                 
                 event_option =>
                 {
-                    println!("{:?}",event_option);
+                    //println!("{:?}",event_option);
                 }
             }
         }
-        if time_since_last_draw.elapsed().unwrap().subsec_nanos() > 150000000
-        {
+        if run {
+            if time_since_last_draw.elapsed().unwrap().subsec_nanos() > 150000000 {
 
-            time_since_last_draw = SystemTime::now();
-        match dir {
-            0 => {
-                snake[0].x+=speed;
-            },
-            1 => {
-                snake[0].x-=speed;
-            },
-            2 => {
-                snake[0].y+=speed;
-            },
-            _ => {
-                snake[0].y-=speed;
+                time_since_last_draw = SystemTime::now();
+            match dir {
+                0 => {
+                    snake[0].x+=speed;
+                },
+                1 => {
+                    snake[0].x-=speed;
+                },
+                2 => {
+                    snake[0].y+=speed;
+                },
+                _ => {
+                    snake[0].y-=speed;
+                }
             }
-        }
 
-        window.clear();
-        let mut last_x = -100;
-        let mut last_y = 0;
-        let mut snakegrow = false;
+            let mut snakegrow = false;
 
-        for a in &snake{
-            //check col with point
-            if a.intersects(&point) {
-                snakegrow = true;
-                loop {
-                    point.x = 10*(randpos.ind_sample(&mut rng) as i32);
-                    point.y = 10*(randpos.ind_sample(&mut rng) as i32);
-                    let mut collides : bool = false;
-                    for part in &snake {
-                        if part.intersects(&point){
-                            collides = true;
+            for a in &snake{
+                //check col with point
+                if a.intersects(&point) {
+                    snakegrow = true;
+                    loop {
+                        point.x = 10*(randpos.ind_sample(&mut rng) as i32);
+                        point.y = 10*(randpos.ind_sample(&mut rng) as i32);
+                        let mut collides : bool = false;
+                        for part in &snake {
+                            if part.intersects(&point){
+                                collides = true;
+                            }
+                        }
+                        if !collides {
+                            break;
                         }
                     }
-                    if !collides {
-                        break;
+                }
+                //check col with self
+                for b in &snake{
+                    if a.intersects(b) {
+                        run = false;
                     }
                 }
-            }
-            //check col with self
-            for b in &snake{
-                if a.intersects(b) {
-                    println!("Game Over");
-                }
-            }
-            //check col with map
-            for b in &map {
-                if a.intersects(b) {
-                    println!("Game Over");
-                }
+                //check col with map
+                for b in &map {
+                    if a.intersects(b) {
+                        run = false;
+                    }
 
+                }
             }
-        }
-        point.color = Color::rgb(betwene.ind_sample(&mut rng),betwene.ind_sample(&mut rng),betwene.ind_sample(&mut rng));
-        point.draw(&mut window);
-        if snakegrow {
-            snake.push(GameObject::new(-10,-10,10,10,
+            if snakegrow {
+                points += 10;
+                snake.push(GameObject::new(-10,-10,10,10,
                                     betwene.ind_sample(&mut rng),
                                     50,
                                     50));    
+            }
         }
+        window.clear();
+        point.color = Color::rgb(betwene.ind_sample(&mut rng),betwene.ind_sample(&mut rng),betwene.ind_sample(&mut rng));
+        point.draw(&mut window);
+
 
         for blocks in &mut map {
             blocks.draw(&mut window);
         }
 
+
+        let mut last_x = -100;
+        let mut last_y = 0;
         for parts in &mut snake {
 
 
@@ -167,7 +177,6 @@ fn main() {
                 last_y = parts.y;
             }
             parts.draw(&mut window);
-            //window.circle(parts.x,parts.y,-speed/2,parts.color);
         }
             window.sync();
         }
