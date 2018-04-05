@@ -213,6 +213,7 @@ fn main() {
             let mut text_x = 100;
             let mut text_y = 100;
             window.clear();
+            
             for ch in text.chars() {
                 if ch == '\n' {
                     text_y = text_y + 15;
