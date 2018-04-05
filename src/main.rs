@@ -175,14 +175,12 @@ fn main() {
                     //check col with self
                     for b in &snake{
                         if a.intersects(b) {
-                            println!("Game over: Self crash!");
                             run = false;
                         }
                     }
                     //check col with map
                     for b in &map {
                         if a.intersects(b) {
-                            println!("Game over: Map crash!");
                             run = false;
                         }
 
@@ -210,14 +208,14 @@ fn main() {
         }
         else {
             let text = format!("Game Over!\n{:?} Points",points);
-            let mut text_x = 100;
-            let mut text_y = 100;
+            let mut text_x = 10;
+            let mut text_y = 10;
             window.clear();
-            
+
             for ch in text.chars() {
                 if ch == '\n' {
                     text_y = text_y + 15;
-                    text_x = 100;
+                    text_x = 10;
                 }
                 else {
                     window.char(text_x,text_y,ch,orbclient::Color::rgb(255,255,255));
