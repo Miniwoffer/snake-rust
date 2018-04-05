@@ -1,12 +1,9 @@
 
 extern crate orbclient;
-
 extern crate rand;
 
 use orbclient::{Color,Window,Renderer,EventOption};
-
 use rand::distributions::{IndependentSample, Range};
-
 use std::time::{SystemTime};
 
 mod game;
@@ -53,6 +50,7 @@ fn main() {
 
 
     let mut dir = 0;
+    let mut last_dir = 0;
     let speed = 10;
     let mut points = 0;
     let mut time_since_last_draw = SystemTime::now();
@@ -69,6 +67,8 @@ fn main() {
                 EventOption::Key(evt) => {
                     if evt.pressed {
                     match evt.scancode {
+                        //esc
+                        1 => break 'events,
                         77 => dir = 0,
                         75 => dir = 1,
                         80 => dir = 2,
@@ -80,105 +80,151 @@ fn main() {
                     }
                 },
                 
-                event_option =>
+                _event_option =>
                 {
                     //println!("{:?}",event_option);
                 }
             }
         }
         if run {
+            let mut last_x = snake[0].x;
+            let mut last_y = snake[0].y;
             if time_since_last_draw.elapsed().unwrap().subsec_nanos() > 150000000 {
 
                 time_since_last_draw = SystemTime::now();
-            match dir {
-                0 => {
-                    snake[0].x+=speed;
-                },
-                1 => {
-                    snake[0].x-=speed;
-                },
-                2 => {
-                    snake[0].y+=speed;
-                },
-                _ => {
-                    snake[0].y-=speed;
+                match dir {
+                    0 => {
+                        if last_dir == 1 {
+                            dir = 1;
+                        }
+                        else{
+                            last_dir = dir;
+                        }
+                    },
+                    1 => {
+                        if last_dir == 0 {
+                            dir = 0;
+                        }
+                        else{
+                            last_dir = dir;
+                        }
+                    },
+                    2 => {
+                        if last_dir == 3 {
+                            dir = 3;
+                        }
+                        else{
+                            last_dir = dir;
+                        }
+                    },
+                    _ => {
+                        if last_dir == 2 {
+                            dir = 2;
+                        }
+                        else{
+                            last_dir = dir;
+                        }
+                    }
                 }
-            }
+                match dir {
+                    0 => {
+                        last_x+=speed;
+                    },
+                    1 => {
+                        last_x-=speed;
+                    },
+                    2 => {
+                        last_y+=speed;
+                    },
+                    _ => {
+                        last_y-=speed;
+                    }
+                }
+                for parts in &mut snake {
 
-            let mut snakegrow = false;
+                    let temp_x = parts.x;
+                    let temp_y = parts.y;
 
-            for a in &snake{
-                //check col with point
-                if a.intersects(&point) {
-                    snakegrow = true;
-                    loop {
-                        point.x = 10*(randpos.ind_sample(&mut rng) as i32);
-                        point.y = 10*(randpos.ind_sample(&mut rng) as i32);
-                        let mut collides : bool = false;
-                        for part in &snake {
-                            if part.intersects(&point){
-                                collides = true;
+                    parts.x = last_x;
+                    parts.y = last_y;
+
+                    last_x = temp_x;
+                    last_y = temp_y;
+                }
+
+                let mut snakegrow = false;
+
+                for a in &snake{
+                    //check col with point
+                    if a.intersects(&point) {
+                        snakegrow = true;
+                        loop {
+                            point.x = 10*(randpos.ind_sample(&mut rng) as i32);
+                            point.y = 10*(randpos.ind_sample(&mut rng) as i32);
+                            let mut collides : bool = false;
+                            for part in &snake {
+                                if part.intersects(&point){
+                                    collides = true;
+                                }
+                            }
+                            if !collides {
+                                break;
                             }
                         }
-                        if !collides {
-                            break;
+                    }
+                    //check col with self
+                    for b in &snake{
+                        if a.intersects(b) {
+                            println!("Game over: Self crash!");
+                            run = false;
                         }
                     }
-                }
-                //check col with self
-                for b in &snake{
-                    if a.intersects(b) {
-                        run = false;
+                    //check col with map
+                    for b in &map {
+                        if a.intersects(b) {
+                            println!("Game over: Map crash!");
+                            run = false;
+                        }
+
                     }
                 }
-                //check col with map
-                for b in &map {
-                    if a.intersects(b) {
-                        run = false;
-                    }
-
+                if snakegrow {
+                    points += 10;
+                    snake.push(GameObject::new(-10,-10,10,10,
+                                        betwene.ind_sample(&mut rng),
+                                        50,
+                                        50));    
                 }
             }
-            if snakegrow {
-                points += 10;
-                snake.push(GameObject::new(-10,-10,10,10,
-                                    betwene.ind_sample(&mut rng),
-                                    50,
-                                    50));    
+            window.clear();
+            point.color = Color::rgb(betwene.ind_sample(&mut rng),betwene.ind_sample(&mut rng),betwene.ind_sample(&mut rng));
+            point.draw(&mut window);
+            for blocks in &mut map {
+                blocks.draw(&mut window);
             }
-        }
-        window.clear();
-        point.color = Color::rgb(betwene.ind_sample(&mut rng),betwene.ind_sample(&mut rng),betwene.ind_sample(&mut rng));
-        point.draw(&mut window);
 
-
-        for blocks in &mut map {
-            blocks.draw(&mut window);
-        }
-
-
-        let mut last_x = -100;
-        let mut last_y = 0;
-        for parts in &mut snake {
-
-
-            if last_x != -100 {
-                let temp_x = parts.x;
-                let temp_y = parts.y;
-
-                parts.x = last_x;
-                parts.y = last_y;
-
-                last_x = temp_x;
-                last_y = temp_y;
+            for parts in &mut snake {
+                parts.draw(&mut window);
             }
-            else {
-                last_x = parts.x;
-                last_y = parts.y;
-            }
-            parts.draw(&mut window);
-        }
             window.sync();
+        }
+        else {
+            let text = format!("Game Over!\n{:?} Points",points);
+            let mut text_x = 100;
+            let mut text_y = 100;
+            window.clear();
+            for ch in text.chars() {
+                if ch == '\n' {
+                    text_y = text_y + 15;
+                    text_x = 100;
+                }
+                else {
+                    window.char(text_x,text_y,ch,orbclient::Color::rgb(255,255,255));
+                    text_x = text_x + 10;
+                }
+            }
+            window.sync();
+
         }
     }
 }
