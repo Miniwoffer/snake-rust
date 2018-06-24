@@ -12,7 +12,7 @@
         pub w:u32,
         pub h:u32,
         pub color:Color,
-        pub id : i32,
+        pub id : i322
 
     }
 
